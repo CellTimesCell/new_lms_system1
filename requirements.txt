@@ -1,0 +1,40 @@
+# requirements.txt
+# Core dependencies
+fastapi==0.95.0
+uvicorn==0.21.1
+sqlalchemy==2.0.9
+alembic==1.10.3
+pydantic==1.10.7
+python-dotenv==1.0.0
+pyjwt==2.6.0
+passlib==1.7.4
+bcrypt==4.0.1
+
+# Database drivers
+psycopg2-binary==2.9.6
+clickhouse-driver==0.2.6
+redis==4.5.4
+
+# Messaging
+confluent-kafka==2.1.1
+celery==5.2.7
+
+# API and integration
+httpx==0.24.0
+requests==2.28.2
+python-multipart==0.0.6
+oauthlib==3.2.2
+
+# AI components
+openai==0.27.4
+
+# Utilities
+python-jose==3.3.0
+python-dateutil==2.8.2
+tenacity==8.2.2
+uuid==1.30
+
+# Testing
+pytest==7.3.1
+pytest-asyncio==0.21.0
+pytest-cov==4.1.0

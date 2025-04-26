@@ -1,0 +1,50 @@
+# Traefik API Gateway configuration
+http:
+  routers:
+    # Core API Routes
+    core-api:
+      rule: "PathPrefix(`/api/v1`)"
+      service: core-api-service
+      middlewares:
+        - rate-limit
+        - auth-middleware
+
+    # Analytics Routes
+    analytics-api:
+      rule: "PathPrefix(`/api/analytics`)"
+      service: analytics-service
+      middlewares:
+        - rate-limit
+        - auth-middleware
+
+    # Frontend Routes
+    frontend:
+      rule: "PathPrefix(`/`)"
+      service: frontend-service
+
+  middlewares:
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    auth-middleware:
+      forwardAuth:
+        address: "http://auth-service:8000/auth/validate"
+        trustForwardHeader: true
+
+  services:
+    core-api-service:
+      loadBalancer:
+        servers:
+          - url: "http://core-api:8000"
+
+    analytics-service:
+      loadBalancer:
+        servers:
+          - url: "http://analytics-service:8000"
+
+    frontend-service:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:3000"

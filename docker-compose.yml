@@ -1,0 +1,197 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  traefik:
+    image: traefik:v2.5
+    command:
+      - "--api.insecure=true"  # Enable dashboard (disable in production)
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"  # Dashboard (remove in production)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - lms_network
+
+  # Core LMS API
+  core-api:
+    build:
+      context: .
+      dockerfile: ./deployment/docker/core.Dockerfile
+    volumes:
+      - ./core:/app/core
+      - ./infrastructure:/app/infrastructure
+    environment:
+      - POSTGRES_USER=lmsuser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=lms_db
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - REDIS_HOST=redis
+      - JWT_SECRET=your_jwt_secret_key_for_development
+      - JWT_ALGORITHM=HS256
+      - JWT_EXPIRATION=86400
+    depends_on:
+      - postgres
+      - kafka
+      - redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.core-api.rule=PathPrefix(`/api/v1`)"
+      - "traefik.http.services.core-api.loadbalancer.server.port=8000"
+    networks:
+      - lms_network
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: .
+      dockerfile: ./deployment/docker/analytics.Dockerfile
+    volumes:
+      - ./microservices/analytics_service:/app/microservices/analytics_service
+      - ./infrastructure:/app/infrastructure
+    environment:
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_DB=lms_analytics
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - clickhouse
+      - kafka
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.analytics-api.rule=PathPrefix(`/api/analytics`)"
+      - "traefik.http.services.analytics-api.loadbalancer.server.port=8000"
+    networks:
+      - lms_network
+
+  # Content/File Service
+  content-service:
+    build:
+      context: .
+      dockerfile: ./deployment/docker/content.Dockerfile
+    volumes:
+      - ./microservices/content_service:/app/microservices/content_service
+      - ./infrastructure:/app/infrastructure
+      - ./storage:/app/storage
+    environment:
+      - STORAGE_PATH=/app/storage
+      - STORAGE_TYPE=local
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.content-api.rule=PathPrefix(`/api/files`)"
+      - "traefik.http.services.content-api.loadbalancer.server.port=8000"
+    networks:
+      - lms_network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: ./deployment/docker/notification.Dockerfile
+    volumes:
+      - ./microservices/notification_service:/app/microservices/notification_service
+      - ./infrastructure:/app/infrastructure
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SMTP_HOST=${SMTP_HOST:-smtp.example.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-noreply@example.com}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-password}
+      - SMTP_FROM=LMS System <noreply@example.com>
+    depends_on:
+      - kafka
+      - redis
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notification-api.rule=PathPrefix(`/api/notifications`)"
+      - "traefik.http.services.notification-api.loadbalancer.server.port=8000"
+    networks:
+      - lms_network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../deployment/docker/frontend.Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost/api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    networks:
+      - lms_network
+
+  # Databases
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=lmsuser
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=lms_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - lms_network
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    networks:
+      - lms_network
+
+  redis:
+    image: redis:6
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - lms_network
+
+  # Message Queue
+  zookeeper:
+    image: wurstmeister/zookeeper
+    networks:
+      - lms_network
+
+  kafka:
+    image: wurstmeister/kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - lms_network
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+  redis_data:
+  storage:
+
+networks:
+  lms_network:
+    driver: bridge

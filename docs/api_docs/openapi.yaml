@@ -1,0 +1,448 @@
+openapi: 3.0.3
+info:
+  title: LMS API
+  description: API documentation for the Learning Management System
+  version: 1.0.0
+servers:
+  - url: https://lms.example.com/api
+    description: Production server
+  - url: http://localhost/api
+    description: Local development server
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Users
+    description: User management
+  - name: Courses
+    description: Course management
+  - name: Assignments
+    description: Assignment management
+  - name: Submissions
+    description: Assignment submissions
+  - name: Grades
+    description: Grading management
+  - name: Analytics
+    description: Analytics and reporting
+  - name: Files
+    description: File management
+  - name: Notifications
+    description: Notification system
+  - name: Integrations
+    description: External integrations
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login to the system
+      description: Authenticate a user and get access token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: teacher1
+                password:
+                  type: string
+                  example: securepassword
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    example: bearer
+                  expires_at:
+                    type: string
+                    format: date-time
+                  user_id:
+                    type: integer
+                  username:
+                    type: string
+                  roles:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Invalid credentials
+  /analytics/track:
+    post:
+      tags:
+        - Analytics
+      summary: Track activity event
+      description: Record a student activity event
+      operationId: trackActivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_id
+                - student_id
+                - event_type
+                - resource_type
+                - timestamp
+              properties:
+                event_id:
+                  type: string
+                  format: uuid
+                student_id:
+                  type: integer
+                event_type:
+                  type: string
+                  example: page_view
+                resource_type:
+                  type: string
+                  example: course
+                resource_id:
+                  type: string
+                  nullable: true
+                timestamp:
+                  type: string
+                  format: date-time
+                ip_address:
+                  type: string
+                  nullable: true
+                user_agent:
+                  type: string
+                  nullable: true
+                duration_seconds:
+                  type: integer
+                  default: 0
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '202':
+          description: Event accepted for processing
+  /courses:
+    get:
+      tags:
+        - Courses
+      summary: List courses
+      description: Get a list of courses with filtering options
+      operationId: listCourses
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          description: Search term
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Course status
+          schema:
+            type: string
+            enum: [active, inactive, archived]
+      responses:
+        '200':
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Course'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  pages:
+                    type: integer
+    post:
+      tags:
+        - Courses
+      summary: Create course
+      description: Create a new course
+      operationId: createCourse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseCreate'
+      responses:
+        '201':
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Course'
+  /assignments:
+    post:
+      tags:
+        - Assignments
+      summary: Create assignment
+      description: Create a new assignment
+      operationId: createAssignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentCreate'
+      responses:
+        '201':
+          description: Assignment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assignment'
+  /assignments/{assignment_id}/submissions:
+    post:
+      tags:
+        - Submissions
+      summary: Submit assignment
+      description: Submit an assignment
+      operationId: submitAssignment
+      parameters:
+        - name: assignment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionCreate'
+      responses:
+        '201':
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
+components:
+  schemas:
+    Course:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        is_published:
+          type: boolean
+        instructor_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CourseCreate:
+      type: object
+      required:
+        - title
+        - code
+      properties:
+        title:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+          default: true
+        is_published:
+          type: boolean
+          default: false
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        course_id:
+          type: integer
+        created_by_id:
+          type: integer
+        due_date:
+          type: string
+          format: date-time
+        available_from:
+          type: string
+          format: date-time
+        available_until:
+          type: string
+          format: date-time
+        points_possible:
+          type: number
+          format: float
+        submission_type:
+          type: string
+        is_published:
+          type: boolean
+        allow_late_submissions:
+          type: boolean
+        late_submission_penalty:
+          type: number
+          format: float
+        rubric_id:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AssignmentCreate:
+      type: object
+      required:
+        - title
+        - course_id
+        - submission_type
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        course_id:
+          type: integer
+        due_date:
+          type: string
+          format: date-time
+        available_from:
+          type: string
+          format: date-time
+        available_until:
+          type: string
+          format: date-time
+        points_possible:
+          type: number
+          format: float
+          default: 100.0
+        submission_type:
+          type: string
+          enum: [online_text, online_upload, online_quiz, discussion, external_tool]
+        is_published:
+          type: boolean
+          default: false
+        allow_late_submissions:
+          type: boolean
+          default: true
+        late_submission_penalty:
+          type: number
+          format: float
+          default: 0.0
+        rubric_id:
+          type: integer
+          nullable: true
+    Submission:
+      type: object
+      properties:
+        id:
+          type: integer
+        assignment_id:
+          type: integer
+        student_id:
+          type: integer
+        submitted_at:
+          type: string
+          format: date-time
+        submission_text:
+          type: string
+          nullable: true
+        submission_files:
+          type: array
+          items:
+            type: object
+            properties:
+              file_name:
+                type: string
+              file_url:
+                type: string
+              file_type:
+                type: string
+              file_size:
+                type: integer
+        is_late:
+          type: boolean
+        status:
+          type: string
+          enum: [draft, submitted, graded]
+    SubmissionCreate:
+      type: object
+      properties:
+        submission_text:
+          type: string
+          nullable: true
+        submission_files:
+          type: array
+          items:
+            type: object
+            properties:
+              file_name:
+                type: string
+              file_url:
+                type: string
+              file_type:
+                type: string
+              file_size:
+                type: integer
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []

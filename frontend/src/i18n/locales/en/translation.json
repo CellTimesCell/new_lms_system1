@@ -1,0 +1,90 @@
+// frontend/src/i18n/locales/en/translation.json
+{
+  "app": {
+    "name": "Learning Management System",
+    "shortName": "LMS"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "email": "Email",
+    "username": "Username",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "loginSuccess": "Login successful",
+    "loginError": "Login failed. Please check your credentials.",
+    "registerSuccess": "Registration successful",
+    "registerError": "Registration failed. Please try again.",
+    "passwordResetSuccess": "Password reset successful",
+    "passwordResetError": "Password reset failed."
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "calendar": "Calendar",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{name}}!",
+    "myCourses": "My Courses",
+    "upcomingAssignments": "Upcoming Assignments",
+    "recentActivity": "Recent Activity",
+    "announcements": "Announcements"
+  },
+  "courses": {
+    "allCourses": "All Courses",
+    "myCourses": "My Courses",
+    "createCourse": "Create Course",
+    "courseDetails": "Course Details",
+    "courseCode": "Course Code",
+    "instructor": "Instructor",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "modules": "Modules",
+    "assignments": "Assignments",
+    "materials": "Materials",
+    "participants": "Participants",
+    "enroll": "Enroll",
+    "unenroll": "Unenroll"
+  },
+  "assignments": {
+    "title": "Assignments",
+    "createAssignment": "Create Assignment",
+    "dueDate": "Due Date",
+    "points": "Points",
+    "submissionType": "Submission Type",
+    "status": "Status",
+    "submit": "Submit",
+    "submitted": "Submitted",
+    "graded": "Graded",
+    "late": "Late",
+    "upcoming": "Upcoming",
+    "pastDue": "Past Due"
+  },
+  "profile": {
+    "personalInfo": "Personal Information",
+    "updateProfile": "Update Profile",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "bio": "Bio",
+    "timezone": "Timezone",
+    "language": "Language",
+    "profilePicture": "Profile Picture"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "noData": "No data available"
+  }
+}

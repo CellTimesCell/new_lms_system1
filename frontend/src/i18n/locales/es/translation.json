@@ -1,0 +1,90 @@
+// frontend/src/i18n/locales/es/translation.json
+{
+  "app": {
+    "name": "Sistema de Gestión de Aprendizaje",
+    "shortName": "SGA"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "register": "Registrarse",
+    "forgotPassword": "¿Olvidó su Contraseña?",
+    "resetPassword": "Restablecer Contraseña",
+    "email": "Correo Electrónico",
+    "username": "Nombre de Usuario",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar Contraseña",
+    "loginSuccess": "Inicio de sesión exitoso",
+    "loginError": "Error al iniciar sesión. Verifique sus credenciales.",
+    "registerSuccess": "Registro exitoso",
+    "registerError": "Error al registrarse. Inténtelo de nuevo.",
+    "passwordResetSuccess": "Restablecimiento de contraseña exitoso",
+    "passwordResetError": "Error al restablecer la contraseña."
+  },
+  "navigation": {
+    "home": "Inicio",
+    "dashboard": "Panel",
+    "courses": "Cursos",
+    "calendar": "Calendario",
+    "profile": "Perfil",
+    "settings": "Configuración"
+  },
+  "dashboard": {
+    "welcome": "¡Bienvenido, {{name}}!",
+    "myCourses": "Mis Cursos",
+    "upcomingAssignments": "Próximas Tareas",
+    "recentActivity": "Actividad Reciente",
+    "announcements": "Anuncios"
+  },
+  "courses": {
+    "allCourses": "Todos los Cursos",
+    "myCourses": "Mis Cursos",
+    "createCourse": "Crear Curso",
+    "courseDetails": "Detalles del Curso",
+    "courseCode": "Código del Curso",
+    "instructor": "Instructor",
+    "startDate": "Fecha de Inicio",
+    "endDate": "Fecha de Fin",
+    "modules": "Módulos",
+    "assignments": "Tareas",
+    "materials": "Materiales",
+    "participants": "Participantes",
+    "enroll": "Inscribirse",
+    "unenroll": "Cancelar Inscripción"
+  },
+  "assignments": {
+    "title": "Tareas",
+    "createAssignment": "Crear Tarea",
+    "dueDate": "Fecha de Entrega",
+    "points": "Puntos",
+    "submissionType": "Tipo de Entrega",
+    "status": "Estado",
+    "submit": "Entregar",
+    "submitted": "Entregado",
+    "graded": "Calificado",
+    "late": "Tarde",
+    "upcoming": "Próximo",
+    "pastDue": "Vencido"
+  },
+  "profile": {
+    "personalInfo": "Información Personal",
+    "updateProfile": "Actualizar Perfil",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "bio": "Biografía",
+    "timezone": "Zona Horaria",
+    "language": "Idioma",
+    "profilePicture": "Foto de Perfil"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "noData": "No hay datos disponibles"
+  }
+}
