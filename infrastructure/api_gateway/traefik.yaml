@@ -7,7 +7,8 @@ http:
       service: core-api-service
       middlewares:
         - rate-limit
-        - auth-middleware
+        - security-headers
+        - cors-headers
 
     # Analytics Routes
     analytics-api:
@@ -15,34 +16,194 @@ http:
       service: analytics-service
       middlewares:
         - rate-limit
-        - auth-middleware
+        - security-headers
+        - api-auth
+        - cors-headers
+
+    # Content/File Service Routes
+    content-api:
+      rule: "PathPrefix(`/api/files`)"
+      service: content-service
+      middlewares:
+        - rate-limit
+        - security-headers
+        - api-auth
+        - cors-headers
+
+    # Notification Service Routes
+    notification-api:
+      rule: "PathPrefix(`/api/notifications`)"
+      service: notification-service
+      middlewares:
+        - rate-limit
+        - security-headers
+        - api-auth
+        - cors-headers
+
+    # AI Service Routes
+    ai-api:
+      rule: "PathPrefix(`/api/ai`)"
+      service: ai-service
+      middlewares:
+        - rate-limit
+        - security-headers
+        - api-auth
+        - cors-headers
+
+    # Gamification Service Routes
+    gamification-api:
+      rule: "PathPrefix(`/api/gamification`)"
+      service: gamification-service
+      middlewares:
+        - rate-limit
+        - security-headers
+        - api-auth
+        - cors-headers
+
+    # Integration Service Routes
+    integration-api:
+      rule: "PathPrefix(`/api/integrations`)"
+      service: integration-service
+      middlewares:
+        - rate-limit
+        - security-headers
+        - api-auth
+        - cors-headers
+
+    # WebSocket Notifications
+    websocket-notifications:
+      rule: "PathPrefix(`/ws`)"
+      service: notification-service
+      middlewares:
+        - security-headers
+        - cors-headers
 
     # Frontend Routes
     frontend:
       rule: "PathPrefix(`/`)"
       service: frontend-service
+      middlewares:
+        - security-headers
+        - compress
 
   middlewares:
+    # Rate limiting
     rate-limit:
       rateLimit:
         average: 100
         burst: 50
 
-    auth-middleware:
+    # API Authentication using JWT
+    api-auth:
       forwardAuth:
-        address: "http://auth-service:8000/auth/validate"
+        address: "http://core-api:8000/api/v1/auth/validate"
         trustForwardHeader: true
+        authResponseHeaders:
+          - "X-User-Id"
+          - "X-User-Role"
+
+    # Security headers
+    security-headers:
+      headers:
+        frameDeny: true
+        sslRedirect: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        customResponseHeaders:
+          X-Content-Type-Options: "nosniff"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Permissions-Policy: "camera=(), microphone=(), geolocation=()"
+
+    # CORS headers
+    cors-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - Authorization
+          - Content-Type
+          - X-Requested-With
+        accessControlAllowOriginList:
+          - "http://localhost:3000"
+          - "http://localhost"
+        accessControlMaxAge: 100
+        accessControlAllowCredentials: true
+        addVaryHeader: true
+
+    # Compression
+    compress:
+      compress: {}
 
   services:
     core-api-service:
       loadBalancer:
         servers:
           - url: "http://core-api:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"
 
     analytics-service:
       loadBalancer:
         servers:
           - url: "http://analytics-service:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"
+
+    content-service:
+      loadBalancer:
+        servers:
+          - url: "http://content-service:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"
+
+    notification-service:
+      loadBalancer:
+        servers:
+          - url: "http://notification-service:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"
+
+    ai-service:
+      loadBalancer:
+        servers:
+          - url: "http://ai-service:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"
+
+    gamification-service:
+      loadBalancer:
+        servers:
+          - url: "http://gamification-service:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"
+
+    integration-service:
+      loadBalancer:
+        servers:
+          - url: "http://integration-service:8000"
+        healthCheck:
+          path: /health
+          interval: "10s"
+          timeout: "3s"
 
     frontend-service:
       loadBalancer:

@@ -1,4 +1,4 @@
-# Assignment models for the LMS system
+# core/lms_core/assignments/models.py
 from sqlalchemy import Column, Integer, String, Text, Float, Boolean, ForeignKey, DateTime, Table, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
