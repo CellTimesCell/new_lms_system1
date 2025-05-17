@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from infrastructure.databases.database_config import SessionLocal, engine, Base
 from core.lms_core.users.models import User, Role, UserProfile
 from core.lms_core.courses.models import Course, Module, ContentItem, Enrollment
+from core.lms_core.assignments.models import Assignment  # Add this import
 from core.lms_core.auth.auth import get_password_hash
 
 
@@ -161,6 +162,21 @@ def create_sample_data():
         ]
 
         db.add_all(content_items)
+        db.commit()
+
+        # Create a sample assignment for the math course
+        sample_assignment = Assignment(
+            title="Algebra Practice Problems",
+            description="Complete these practice problems to test your understanding of basic algebra concepts.",
+            course_id=math_course.id,
+            created_by_id=instructor.id,
+            due_date=datetime.now() + timedelta(days=14),
+            points_possible=100,
+            submission_type="online_text",
+            is_published=True
+        )
+
+        db.add(sample_assignment)
         db.commit()
 
         # Enroll students in courses

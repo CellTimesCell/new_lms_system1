@@ -28,6 +28,7 @@ class Assignment(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
+    # Use string reference instead of direct class reference to avoid circular imports
     course = relationship("Course", back_populates="assignments")
     created_by = relationship("User")
     submissions = relationship("Submission", back_populates="assignment")

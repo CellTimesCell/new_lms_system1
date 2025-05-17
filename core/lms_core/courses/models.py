@@ -1,4 +1,4 @@
-# Course models for the LMS system
+# core/lms_core/courses/models.py
 from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, DateTime, Table
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -35,6 +35,8 @@ class Course(Base):
     instructor = relationship("User", back_populates="courses_teaching")
     enrollments = relationship("Enrollment", back_populates="course")
     modules = relationship("Module", secondary=course_modules, back_populates="courses")
+
+    # Use string reference instead of direct class reference to avoid circular imports
     assignments = relationship("Assignment", back_populates="course")
 
 
