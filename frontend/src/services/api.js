@@ -1,198 +1,67 @@
-// frontend/src/services/api.js
-
 import axios from 'axios';
 
-// Create API service
-const api = {
-  // Authentication
-  login: async (username, password) => {
-    const response = await axios.post('/api/v1/auth/token',
-      new URLSearchParams({
-        'username': username,
-        'password': password
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
+// API Base URLs
+const CORE_API_URL = process.env.REACT_APP_CORE_API_URL;
+const FILES_API_URL = process.env.REACT_APP_FILES_API_URL;
+const ANALYTICS_API_URL = process.env.REACT_APP_ANALYTICS_API_URL;
+const AI_API_URL = process.env.REACT_APP_AI_API_URL;
+const NOTIFICATIONS_API_URL = process.env.REACT_APP_NOTIFICATIONS_API_URL;
+
+// Create axios instances for different services
+const createApiClient = (baseURL) => {
+  const client = axios.create({
+    baseURL,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  // Add request interceptor to include auth token
+  client.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
       }
-    );
-    return response.data;
-  },
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
 
-  register: async (userData) => {
-    const response = await axios.post('/api/v1/users/', userData);
-    return response.data;
-  },
-
-  // Password reset
-  requestPasswordReset: async (email) => {
-    const response = await axios.post('/api/v1/auth/request-password-reset', { email });
-    return response.data;
-  },
-
-  resetPassword: async (token, password) => {
-    const response = await axios.post('/api/v1/auth/reset-password', {
-      token,
-      password
-    });
-    return response.data;
-  },
-
-  // Users
-  getUserProfile: async () => {
-    const response = await axios.get('/api/v1/users/me');
-    return response.data;
-  },
-
-  getUsers: async () => {
-    const response = await axios.get('/api/v1/users/');
-    return response.data;
-  },
-
-  getUserById: async (userId) => {
-    const response = await axios.get(`/api/v1/users/${userId}`);
-    return response.data;
-  },
-
-  updateUser: async (userId, userData) => {
-    const response = await axios.put(`/api/v1/users/${userId}`, userData);
-    return response.data;
-  },
-
-  createUserProfile: async (userId, profileData) => {
-    const response = await axios.post(`/api/v1/users/profiles/${userId}`, profileData);
-    return response.data;
-  },
-
-  updateUserProfile: async (userId, profileData) => {
-    const response = await axios.put(`/api/v1/users/profiles/${userId}`, profileData);
-    return response.data;
-  },
-
-  // Courses
-  getCourses: async () => {
-    const response = await axios.get('/api/v1/courses');
-    return response.data;
-  },
-
-  getCourseById: async (courseId) => {
-    const response = await axios.get(`/api/v1/courses/${courseId}`);
-    return response.data;
-  },
-
-  createCourse: async (courseData) => {
-    const response = await axios.post('/api/v1/courses/', courseData);
-    return response.data;
-  },
-
-  updateCourse: async (courseId, courseData) => {
-    const response = await axios.put(`/api/v1/courses/${courseId}`, courseData);
-    return response.data;
-  },
-
-  // Modules
-  createModule: async (courseId, moduleData) => {
-    const response = await axios.post(`/api/v1/courses/${courseId}/modules`, moduleData);
-    return response.data;
-  },
-
-  getModuleContent: async (moduleId) => {
-    const response = await axios.get(`/api/v1/modules/${moduleId}/content`);
-    return response.data;
-  },
-
-  // Assignments
-  getAssignmentById: async (assignmentId) => {
-    const response = await axios.get(`/api/v1/assignments/${assignmentId}`);
-    return response.data;
-  },
-
-  createAssignment: async (assignmentData) => {
-    const response = await axios.post('/api/v1/assignments/', assignmentData);
-    return response.data;
-  },
-
-  submitAssignment: async (assignmentId, submissionData) => {
-    const response = await axios.post(`/api/v1/assignments/${assignmentId}/submit`, submissionData);
-    return response.data;
-  },
-
-  getMySubmission: async (assignmentId) => {
-    const response = await axios.get(`/api/v1/assignments/${assignmentId}/my-submission`);
-    return response.data;
-  },
-
-  // Submissions and grading
-  getSubmissionDetail: async (submissionId) => {
-    const response = await axios.get(`/api/v1/grading/submissions/${submissionId}`);
-    return response.data;
-  },
-
-  gradeSubmission: async (submissionId, gradeData) => {
-    const response = await axios.post(`/api/v1/grading/submissions/${submissionId}/grade`, gradeData);
-    return response.data;
-  },
-
-  // Files
-  uploadFile: async (formData) => {
-    const response = await axios.post('/api/files/upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+  // Add response interceptor to handle errors
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      // Handle token expiration
+      if (error.response && error.response.status === 401) {
+        // Try to refresh token or redirect to login
+        // This can be improved with a token refresh mechanism
+        localStorage.removeItem('token');
+        window.location.href = '/login';
       }
-    });
-    return response.data;
-  },
+      return Promise.reject(error);
+    }
+  );
 
-  getFiles: async (params = {}) => {
-    const response = await axios.get('/api/files', { params });
-    return response.data;
-  },
-
-  // Enrollments
-  enrollInCourse: async (courseId) => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const enrollment = {
-      student_id: user.id,
-      course_id: courseId
-    };
-
-    const response = await axios.post('/api/v1/courses/enroll', enrollment);
-    return response.data;
-  },
-
-  getMyEnrollments: async () => {
-    const response = await axios.get('/api/v1/courses/enrollments/me');
-    return response.data;
-  }
+  return client;
 };
 
-// Request interceptor for adding token
-axios.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  error => {
-    return Promise.reject(error);
-  }
-);
+// Create API clients
+export const coreApi = createApiClient(CORE_API_URL);
+export const filesApi = createApiClient(FILES_API_URL);
+export const analyticsApi = createApiClient(ANALYTICS_API_URL);
+export const aiApi = createApiClient(AI_API_URL);
+export const notificationsApi = createApiClient(NOTIFICATIONS_API_URL);
 
-// Response interceptor for handling errors
-axios.interceptors.response.use(
-  response => response,
-  error => {
-    // Handle unauthorized errors (401)
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+// Helper function for error handling
+export const handleApiError = (error) => {
+  const errorMessage =
+    error.response?.data?.detail ||
+    error.response?.data?.message ||
+    error.message ||
+    'An unexpected error occurred';
 
-export default api;
+  return errorMessage;
+};

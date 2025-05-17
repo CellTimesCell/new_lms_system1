@@ -1,80 +1,162 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authService } from '../services/authService';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => useContext(AuthContext);
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Check if user is logged in on initial load
   useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const initAuth = async () => {
+      const token = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refreshToken');
 
-    if (token && userData) {
-      setCurrentUser(JSON.parse(userData));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    }
+      if (token) {
+        try {
+          // Set the token in the auth service
+          authService.setToken(token);
 
-    setLoading(false);
-  }, []);
+          // Get current user info
+          const userInfo = await authService.getCurrentUser();
+          setCurrentUser(userInfo);
+        } catch (err) {
+          // Token might be expired, try to refresh
+          if (refreshToken) {
+            try {
+              const result = await authService.refreshToken(refreshToken);
+              if (result.access_token) {
+                localStorage.setItem('token', result.access_token);
+                authService.setToken(result.access_token);
 
-  // Login function
- const login = async (username, password) => {
-  try {
-    // Add debug console logs
-    console.log('Attempting login for:', username);
-
-    const response = await axios.post('/api/v1/auth/token',
-      new URLSearchParams({
-        'username': username,
-        'password': password
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+                const userInfo = await authService.getCurrentUser();
+                setCurrentUser(userInfo);
+              } else {
+                // Refresh failed, log out
+                logout();
+              }
+            } catch (refreshErr) {
+              console.error('Error refreshing token:', refreshErr);
+              logout();
+            }
+          } else {
+            // No refresh token, log out
+            logout();
+          }
         }
       }
-    );
 
-    console.log('Login response:', response.data);
-
-    const { access_token, user_id, username: user_name, roles } = response.data;
-
-    const userData = {
-      id: user_id,
-      username: user_name,
-      roles: roles || [] // Default to empty array if roles is undefined
+      setIsLoading(false);
     };
 
-    localStorage.setItem('token', access_token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    initAuth();
+  }, []);
 
-    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+  const login = async (username, password) => {
+    try {
+      setError(null);
+      const result = await authService.login(username, password);
 
-    setCurrentUser(userData);
-    setError('');
+      if (result.access_token) {
+        localStorage.setItem('token', result.access_token);
+        localStorage.setItem('refreshToken', result.refresh_token || '');
 
-    return userData;
-  } catch (err) {
-    console.error('Login error:', err);
-    // More detailed error handling
-    if (err.response) {
-      console.error('Error response:', err.response.data);
-      setError(`Login failed: ${err.response.data.detail || 'Please check your credentials'}`);
-    } else if (err.request) {
-      console.error('No response received');
-      setError('Server not responding. Please try again later.');
-    } else {
-      console.error('Error setting up request:', err.message);
-      setError('An error occurred during login. Please try again.');
+        // Set token in auth service
+        authService.setToken(result.access_token);
+
+        // Get user info from token response
+        setCurrentUser({
+          id: result.user_id,
+          username: result.username,
+          roles: result.roles,
+          firstName: result.first_name,
+          lastName: result.last_name,
+          preferredLanguage: result.preferred_language || 'en'
+        });
+
+        return true;
+      }
+    } catch (err) {
+      setError(err.message || 'Login failed');
+      return false;
     }
-    throw err;
-  }
-};}
+  };
+
+  const register = async (userData) => {
+    try {
+      setError(null);
+      return await authService.register(userData);
+    } catch (err) {
+      setError(err.message || 'Registration failed');
+      return false;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    authService.clearToken();
+    setCurrentUser(null);
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      setError(null);
+      return await authService.forgotPassword(email);
+    } catch (err) {
+      setError(err.message || 'Password reset request failed');
+      return false;
+    }
+  };
+
+  const resetPassword = async (token, newPassword) => {
+    try {
+      setError(null);
+      return await authService.resetPassword(token, newPassword);
+    } catch (err) {
+      setError(err.message || 'Password reset failed');
+      return false;
+    }
+  };
+
+  const verifyEmail = async (token) => {
+    try {
+      setError(null);
+      return await authService.verifyEmail(token);
+    } catch (err) {
+      setError(err.message || 'Email verification failed');
+      return false;
+    }
+  };
+
+  const updateProfile = async (profileData) => {
+    try {
+      setError(null);
+      const updatedUser = await authService.updateProfile(profileData);
+      setCurrentUser(prev => ({ ...prev, ...updatedUser }));
+      return true;
+    } catch (err) {
+      setError(err.message || 'Profile update failed');
+      return false;
+    }
+  };
+
+  const value = {
+    currentUser,
+    isLoading,
+    error,
+    login,
+    register,
+    logout,
+    forgotPassword,
+    resetPassword,
+    verifyEmail,
+    updateProfile
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
